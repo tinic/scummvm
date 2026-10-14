@@ -30,7 +30,10 @@
 #include <proto/dos.h>
 #include <stdio.h>
 
-#ifndef USE_NEWLIB
+// libnix's <string.h> does not include <strings.h>, so the newlib
+// declarations of strcasecmp() and strncasecmp() would only be seen after
+// common/forbidden.h has poisoned those names.
+#if !defined(USE_NEWLIB) && !defined(__amigaos3__)
 #include <strings.h>
 #endif
 

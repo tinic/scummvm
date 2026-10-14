@@ -379,11 +379,20 @@ $(MODULE)/mixer/android/android-mixer.o: CXXFLAGS += "-std=c++14"
 endif
 
 ifdef AMIGAOS
+ifdef AMIGAOS3
+# AmigaOS 3 has the same classic dos.library interface as MorphOS; the
+# AmigaOS 4 backend uses the DOS object API and cannot be reused here.
+MODULE_OBJS += \
+	fs/morphos/morphos-fs.o \
+	fs/morphos/morphos-fs-factory.o \
+	midi/camd.o
+else
 MODULE_OBJS += \
 	dialogs/amigaos/amigaos-dialogs.o \
 	fs/amigaos/amigaos-fs.o \
 	fs/amigaos/amigaos-fs-factory.o \
 	midi/camd.o
+endif
 endif
 
 ifdef MORPHOS

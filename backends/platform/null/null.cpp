@@ -67,7 +67,7 @@ typedef void (*sighandler_t)(int);
  */
 #if defined(__amigaos4__)
 	#include "backends/fs/amigaos/amigaos-fs-factory.h"
-#elif defined(__MORPHOS__)
+#elif defined(__MORPHOS__) || defined(__amigaos3__)
 	#include "backends/fs/morphos/morphos-fs-factory.h"
 #elif defined(POSIX)
 	#include "backends/fs/posix/posix-fs-factory.h"
@@ -110,7 +110,9 @@ OSystem_NULL::OSystem_NULL(bool silenceLogs) :
 	_silenceLogs(silenceLogs) {
 	#if defined(__amigaos4__)
 		_fsFactory = new AmigaOSFilesystemFactory();
-	#elif defined(__MORPHOS__)
+	#elif defined(__MORPHOS__) || defined(__amigaos3__)
+		// AmigaOS 3 has the same classic dos.library interface as
+		// MorphOS; the AmigaOS 4 backend uses the DOS object API.
 		_fsFactory = new MorphOSFilesystemFactory();
 	#elif defined(POSIX)
 		_fsFactory = new POSIXFilesystemFactory();

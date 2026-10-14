@@ -19,7 +19,7 @@
  *
  */
 
-#if defined(__MORPHOS__)
+#if defined(__MORPHOS__) || defined(__amigaos3__)
 
 #include "backends/fs/morphos/morphos-fs.h"
 #include "backends/fs/stdiostream.h"
