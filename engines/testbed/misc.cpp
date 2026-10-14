@@ -158,6 +158,12 @@ TestExitStatus MiscTests::testMutexes() {
 	g_system->delayMillis(3000);
 
 	Testsuite::logDetailedPrintf("Final Value: %d %d\n", sv.first, sv.second);
+
+	// The timed process is only removed from within itself, and timers run in
+	// the main event loop, so it may still fire with a pointer to this stack
+	// frame (and to sv.mutex, deleted right below) after the test returned.
+	g_system->getTimerManager()->removeTimerProc(criticalSection);
+
 	delete sv.mutex;
 
 	if (sv.resultSoFar && 6 == sv.second) {
