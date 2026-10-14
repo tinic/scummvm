@@ -32,6 +32,10 @@ typedef void (*sighandler_t)(int);
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef main
+#elif defined(__amigaos3__)
+// DateStamp()/Delay() for the millisecond clock below.
+#include <proto/dos.h>
+#include <dos/dos.h>
 #endif
 
 // We use some stdio.h functionality here thus we need to allow some
@@ -204,6 +208,13 @@ uint32 OSystem_NULL::getMillis(bool skipRecord) {
 			((curTime.tv_usec - _startTime.tv_usec) / 1000));
 #elif defined(WIN32)
 	return GetTickCount() - _startTime;
+#elif defined(__amigaos3__)
+	// There is no POSIX clock on AmigaOS. DateStamp() counts in 1/50 s
+	// ticks, which is the resolution the rest of the system uses as well.
+	struct DateStamp ds;
+	DateStamp(&ds);
+	uint32 ticks = (uint32)ds.ds_Days * 4320000u + (uint32)ds.ds_Minute * 3000u + (uint32)ds.ds_Tick;
+	return ticks * 20u;
 #else
 	return 0;
 #endif
@@ -214,6 +225,9 @@ void OSystem_NULL::delayMillis(uint msecs) {
 	usleep(msecs * 1000);
 #elif defined(WIN32)
 	Sleep(msecs);
+#elif defined(__amigaos3__)
+	// dos.library Delay() also counts in 1/50 s ticks, so round up.
+	Delay(msecs / 20 + 1);
 #endif
 }
 
