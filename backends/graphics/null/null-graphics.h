@@ -23,10 +23,11 @@
 #define BACKENDS_GRAPHICS_NULL_H
 
 #include "backends/graphics/graphics.h"
+#include "graphics/surface.h"
 
 class NullGraphicsManager : public GraphicsManager {
 public:
-	virtual ~NullGraphicsManager() {}
+	virtual ~NullGraphicsManager() { _screen.free(); }
 
 	bool hasFeature(OSystem::Feature f) const override { return false; }
 	void setFeatureState(OSystem::Feature f, bool enable) override {}
@@ -53,6 +54,11 @@ public:
 		_width = width;
 		_height = height;
 		_format = format ? *format : Graphics::PixelFormat::createFormatCLUT8();
+		// Engines draw into the screen even when nothing is ever displayed
+		// (the testbed engine does, for one), so hand out a scratch surface
+		// instead of a null pointer from lockScreen().
+		_screen.free();
+		_screen.create(width, height, _format);
 	}
 
 	int getScreenChangeID() const override { return 0; }
@@ -65,7 +71,7 @@ public:
 	void setPalette(const byte *colors, uint start, uint num) override {}
 	void grabPalette(byte *colors, uint start, uint num) const override {}
 	void copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) override {}
-	Graphics::Surface *lockScreen() override { return NULL; }
+	Graphics::Surface *lockScreen() override { return &_screen; }
 	void unlockScreen() override {}
 	void fillScreen(uint32 col) override {}
 	void fillScreen(const Common::Rect &r, uint32 col) override {}
@@ -93,6 +99,7 @@ private:
 	uint _width, _height;
 	Graphics::PixelFormat _format;
 	bool _overlayVisible;
+	Graphics::Surface _screen;
 };
 
 #endif
