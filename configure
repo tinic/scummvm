@@ -1926,6 +1926,11 @@ openpandora)
 	_host_cpu=arm
 	_host_alias=arm-angstrom-linux-gnueabi
 	;;
+m68k-amigaos)
+	_host_os=amigaos
+	_host_cpu=m68k
+	_host_alias=$_host
+	;;
 ppc-amigaos)
 	_host_os=amigaos
 	_host_cpu=powerpc
@@ -2679,7 +2684,16 @@ if test "$_debug_build" != no; then
 	echo_n "Checking best debug mode... "
 
 	debug_mode=-g
-	test "$_host_os" = amigaos && debug_mode=-gstabs
+	if test "$_host_os" = amigaos; then
+		# PowerPC builds use stabs; GCC 16 no longer supports it, but
+		# leave those builds as they are.
+		if test "$_host_cpu" = powerpc; then
+			debug_mode=-gstabs
+		else
+			# GCC 16 dropped -gstabs, and the 68k debugger reads DWARF.
+			debug_mode="-g -gdwarf-5"
+		fi
+	fi
 	append_var CXXFLAGS "$debug_mode"
 	echo_n -- "$debug_mode"
 
@@ -3012,9 +3026,23 @@ case $_host_os in
 	amigaos*)
 		_port_mk="backends/platform/sdl/amigaos/amigaos.mk"
 		add_line_to_config_mk 'AMIGAOS = 1'
-		# -mlongcall is needed to fix relocation errors,
-		# otherwise we crash with big engines (i.e. AGS)
-		append_var CXXFLAGS "-mlongcall"
+		# -mlongcall is needed to fix relocation errors on PowerPC,
+		# otherwise we crash with big engines (i.e. AGS). The m68k
+		# compiler does not know the switch.
+		if test "$_host_cpu" = powerpc; then
+			append_var CXXFLAGS "-mlongcall"
+		fi
+		if test "$_host_cpu" = m68k; then
+			# The 68k SDL 1.2 port is built against libnix, so we have to
+			# use the same C runtime. Note that this also selects libnix
+			# at link time.
+			append_var CXXFLAGS "-noixemul"
+			append_var LDFLAGS "-noixemul"
+			# The Amiga linker only emits the debug hunk when it is asked
+			# for debug information at link time.
+			append_var LDFLAGS "$debug_mode"
+			add_line_to_config_mk 'AMIGAOS3 = 1'
+		fi
 		# Dependencies might also be compiled with stack protection
 		append_var LDFLAGS "-fstack-protector"
 		# Enable full optimizations for non-debug builds
